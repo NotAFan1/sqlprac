@@ -67,6 +67,53 @@ class CheckAnswerRequest(BaseModel):
     datasetId: str
     questionId: str
     sql: str
+def generate_ai_feedback(question_prompt: str, expected_sql: str, student_sql: str, reason: str, missing_patterns: list[str]) -> str:
+    try:
+        missing_text = ", ".join(missing_patterns) if missing_patterns else "None"
+
+        prompt = f"""
+        You are helping a student practice SQL.
+
+        Question:
+        {question_prompt}
+
+        Expected SQL:
+        {expected_sql}
+
+        Student SQL:
+        {student_sql}
+
+        Checker result:
+        - reason: {reason}
+        - missing patterns: {missing_text}
+
+        Write a short explanation of what the student likely did wrong.
+        Rules:
+        - Be concise
+        - Be specific
+        - Do NOT give the full corrected SQL
+        - Give a hint about what to fix
+        - If the issue is alias/column naming only, say that clearly
+        """
+
+        response = client.chat.completions.create(
+            model="gpt-4.1-mini",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a SQL tutor. Explain mistakes clearly and briefly without revealing the full solution."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        )
+
+        return response.choices[0].message.content.strip()
+
+    except Exception as e:
+        return f"AI feedback unavailable: {str(e)}"
 def normalize_sql_text(sql: str) -> str:
     return " ".join(sql.lower().split())
 
@@ -136,7 +183,7 @@ def generate_prompt(req: GeneratePromptRequest):
         "explanation": question["explanation"],
         "concepts": question["concepts"],
     }
-
+    
 @app.post("/api/check-answer")
 def check_answer(req: CheckAnswerRequest):
     question = get_question_by_id(req.questionId)
@@ -148,9 +195,17 @@ def check_answer(req: CheckAnswerRequest):
         expected_rows = run_select(question["expected_sql"])
         student_rows = run_select(req.sql)
     except HTTPException as e:
+        ai_feedback = generate_ai_feedback(
+            question["prompt"],
+            question["expected_sql"],
+            req.sql,
+            "sql_error",
+            []
+        )
         return {
             "correct": False,
             "feedback": e.detail,
+            "aiFeedback": ai_feedback,
             "reason": "sql_error",
             "missingPatterns": [],
             "expectedPreview": [],
@@ -166,6 +221,7 @@ def check_answer(req: CheckAnswerRequest):
         return {
             "correct": True,
             "feedback": "Correct.",
+            "aiFeedback": "",
             "reason": "correct",
             "missingPatterns": [],
             "expectedPreview": expected_rows[:10],
@@ -173,9 +229,17 @@ def check_answer(req: CheckAnswerRequest):
         }
 
     if normalize_rows_by_values(expected_rows) == normalize_rows_by_values(student_rows) and structure_ok:
+        ai_feedback = generate_ai_feedback(
+            question["prompt"],
+            question["expected_sql"],
+            req.sql,
+            "alias_mismatch",
+            []
+        )
         return {
             "correct": False,
             "feedback": "Your values are correct, but your column names or aliases differ from the expected output.",
+            "aiFeedback": ai_feedback,
             "reason": "alias_mismatch",
             "missingPatterns": [],
             "expectedPreview": expected_rows[:10],
@@ -183,9 +247,17 @@ def check_answer(req: CheckAnswerRequest):
         }
 
     if expected_rows == student_rows and not structure_ok:
+        ai_feedback = generate_ai_feedback(
+            question["prompt"],
+            question["expected_sql"],
+            req.sql,
+            "lucky_result",
+            missing
+        )
         return {
             "correct": False,
             "feedback": "Your query returns the expected rows on this dataset, but it is missing required SQL structure for this question.",
+            "aiFeedback": ai_feedback,
             "reason": "lucky_result",
             "missingPatterns": missing,
             "expectedPreview": expected_rows[:10],
@@ -193,18 +265,34 @@ def check_answer(req: CheckAnswerRequest):
         }
 
     if not structure_ok:
+        ai_feedback = generate_ai_feedback(
+            question["prompt"],
+            question["expected_sql"],
+            req.sql,
+            "missing_structure",
+            missing
+        )
         return {
             "correct": False,
             "feedback": "Your query is missing required SQL structure.",
+            "aiFeedback": ai_feedback,
             "reason": "missing_structure",
             "missingPatterns": missing,
             "expectedPreview": expected_rows[:10],
             "studentPreview": student_rows[:10],
         }
 
+    ai_feedback = generate_ai_feedback(
+        question["prompt"],
+        question["expected_sql"],
+        req.sql,
+        "wrong_result",
+        []
+    )
     return {
         "correct": False,
         "feedback": "Result does not match the expected output.",
+        "aiFeedback": ai_feedback,
         "reason": "wrong_result",
         "missingPatterns": [],
         "expectedPreview": expected_rows[:10],
