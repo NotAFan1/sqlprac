@@ -214,7 +214,8 @@ export default function SQLPracticeUI() {
     expectedPreview?: Record<string, unknown>[];
     studentPreview?: Record<string, unknown>[];
   }>(null);
-  const [apiBaseUrl, setApiBaseUrl] = useState("/api");
+  const API_BASE_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
   const sqlLooksCorrect = useMemo(() => {
     return normalizeSql(sql) === normalizeSql(practicePrompt.expectedSql);
@@ -225,7 +226,7 @@ export default function SQLPracticeUI() {
     setRunMessage("Executing query...");
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/query", {
+      const res = await fetch(`${API_BASE_URL}/api/query`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -254,7 +255,7 @@ export default function SQLPracticeUI() {
 
   async function generatePrompt() {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/generate-prompt", {
+      const res = await fetch(`${API_BASE_URL}/api/generate-prompt`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -295,7 +296,7 @@ export default function SQLPracticeUI() {
     setCheckResult(null);
 
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/check-answer", {
+      const res = await fetch(`${API_BASE_URL}/api/check-answer`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

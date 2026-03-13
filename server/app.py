@@ -13,7 +13,16 @@ from questions import QUESTIONS, get_question_by_id, get_random_question
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+            "http://localhost:3000",
+            "https://your-vercel-app.vercel.app",
+        ],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -24,7 +33,8 @@ load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
-DB_PATH = "db.sqlite"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "db.sqlite")
 
 SCHEMA_TEXT = """
 Dataset: retail_orders
@@ -158,7 +168,9 @@ def run_select(sql: str) -> list[dict[str, Any]]:
         conn.close()
 def normalize_rows(rows):
     return sorted([tuple(row.values()) for row in rows])
-
+@app.get("/")
+def root():
+    return {"status": "ok"}
 @app.get("/health")
 def health():
     return {"ok": True}
@@ -183,7 +195,7 @@ def generate_prompt(req: GeneratePromptRequest):
         "explanation": question["explanation"],
         "concepts": question["concepts"],
     }
-    
+
 @app.post("/api/check-answer")
 def check_answer(req: CheckAnswerRequest):
     question = get_question_by_id(req.questionId)
