@@ -11,27 +11,21 @@ from openai import OpenAI
 from questions import QUESTIONS, get_question_by_id, get_random_question
 
 app = FastAPI()
+
 app.add_middleware(
     CORSMiddleware,
-    app.add_middleware(
-    CORSMiddleware,
     allow_origins=[
-            "http://localhost:3000",
-            "https://your-vercel-app.vercel.app",
-        ],
-        allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "https://your-vercel-app.vercel.app",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
 load_dotenv()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "db.sqlite")
