@@ -214,6 +214,7 @@ export default function SQLPracticeUI() {
     expectedPreview?: Record<string, unknown>[];
     studentPreview?: Record<string, unknown>[];
   }>(null);
+
   const API_BASE_URL =
     process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -234,13 +235,18 @@ export default function SQLPracticeUI() {
         body: JSON.stringify({
           sql,
           datasetId: "retail_orders",
+          questionId: practicePrompt.id,
         }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || "Query failed");
+        const message =
+          typeof data.detail === "string"
+            ? data.detail
+            : JSON.stringify(data.detail || data);
+        throw new Error(message);
       }
 
       setQueryResult(data.rows);
@@ -268,7 +274,11 @@ export default function SQLPracticeUI() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || "Failed to generate prompt");
+        const message =
+          typeof data.detail === "string"
+            ? data.detail
+            : JSON.stringify(data.detail || data);
+        throw new Error(message);
       }
 
       setPracticePrompt({
@@ -311,7 +321,11 @@ export default function SQLPracticeUI() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.detail || "Check failed");
+        const message =
+          typeof data.detail === "string"
+            ? data.detail
+            : JSON.stringify(data.detail || data);
+        throw new Error(message);
       }
 
       setCheckResult({
@@ -341,7 +355,7 @@ export default function SQLPracticeUI() {
           <Card className="rounded-2xl shadow-sm">
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
-                <div style ={{color:'#000080'}}>
+                <div style={{ color: "#000080" }}>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                     <TerminalSquare className="h-6 w-6" />
                     SQL Prac
@@ -372,8 +386,16 @@ export default function SQLPracticeUI() {
               </div>
 
               <div className="rounded-2xl border bg-muted/30 p-3 text-sm">
-                <div className="font-medium"style={{color:"#000080",fontSize: '1rem', fontWeight: 'bold'}}>Execution status</div>
-                <div style={{ color: 'black', fontSize: '1rem' }} className="mt-1 text-muted-foreground">
+                <div
+                  className="font-medium"
+                  style={{ color: "#000080", fontSize: "1rem", fontWeight: "bold" }}
+                >
+                  Execution status
+                </div>
+                <div
+                  style={{ color: "black", fontSize: "1rem" }}
+                  className="mt-1 text-muted-foreground"
+                >
                   {runStatus === "idle" ? "Idle." : runMessage}
                 </div>
               </div>
@@ -429,11 +451,17 @@ export default function SQLPracticeUI() {
                 </div>
 
                 <div className="rounded-2xl border p-4">
-                  <div style={{color:"#000080",fontSize: '1rem', fontWeight: 'bold'}}className="mb-2 flex items-center gap-2 font-medium">
+                  <div
+                    style={{ color: "#000080", fontSize: "1rem", fontWeight: "bold" }}
+                    className="mb-2 flex items-center gap-2 font-medium"
+                  >
                     <Sparkles className="h-4 w-4" />
                     Prompt for the user
                   </div>
-                  <p style={{ fontSize: '1.5rem', lineHeight: '1.25', color: 'Black'}} className="text-sm text-muted-foreground">
+                  <p
+                    style={{ fontSize: "1.5rem", lineHeight: "1.25", color: "Black" }}
+                    className="text-sm text-muted-foreground"
+                  >
                     {practicePrompt.naturalLanguage}
                   </p>
                 </div>
@@ -480,20 +508,22 @@ export default function SQLPracticeUI() {
                   </div>
                 )}
               </CardContent>
+
               <CardContent>
-              {checkResult?.aiFeedback && (
-              <div className="mt-3 rounded-xl border bg-muted/30 p-3 text-sm">
-                <div className="font-medium mb-1">AI explanation</div>
-                <div className="text-muted-foreground">{checkResult.aiFeedback}</div>
-              </div>
-            )}
-            </CardContent>
+                {checkResult?.aiFeedback && (
+                  <div className="mt-3 rounded-xl border bg-muted/30 p-3 text-sm">
+                    <div className="font-medium mb-1">AI explanation</div>
+                    <div className="text-muted-foreground">{checkResult.aiFeedback}</div>
+                  </div>
+                )}
+              </CardContent>
+
               <CardContent>
                 {isCheckingAnswer && !checkResult && (
-                <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-                  Checking your query and generating AI feedback...
-                </div>
-              )}
+                  <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
+                    Checking your query and generating AI feedback...
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
