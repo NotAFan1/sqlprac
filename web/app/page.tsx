@@ -344,10 +344,10 @@ export default function SQLPracticeUI() {
                 <div style ={{color:'#000080'}}>
                   <CardTitle className="flex items-center gap-2 text-2xl">
                     <TerminalSquare className="h-6 w-6" />
-                    SQL Practice Workspace
+                    SQL Prac
                   </CardTitle>
                   <CardDescription>
-                    Run SQL on a preselected dataset and get AI-generated practice prompts.
+                    First query takes time to connect to DB ~20s, after it should be good
                   </CardDescription>
                 </div>
                 <Badge className="rounded-full px-3 py-1">Dataset locked</Badge>
