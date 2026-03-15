@@ -284,7 +284,302 @@ QUESTIONS = [
     ],
     "concepts":["GROUP BY","COUNT","HAVING"],
     "explanation":"Counts payments by method and filters to methods used at least twice."
+    },
+    {
+    "id": "q16",
+    "difficulty": "hard",
+    "topic": "aggregation",
+    "prompt": "Return the columns `country` and `user_count`. Each row should represent a country. Only include countries with more than 5 users.",
+    "expected_sql": """
+    SELECT country, COUNT(user_id) AS user_count
+    FROM users
+    GROUP BY country
+    HAVING COUNT(user_id) > 5;
+    """.strip(),
+    "required_patterns":[
+    {"label":"group by country","pattern":r"group\s+by\s+.*country"},
+    {"label":"having","pattern":r"having\s+"}
+    ],
+    "concepts":["GROUP BY","HAVING","COUNT"],
+    "explanation":"Counts users per country and filters countries with more than five users."
+    },
+
+    {
+    "id": "q17",
+    "difficulty": "hard",
+    "topic": "join_aggregation",
+    "prompt": "Return the columns `plan_name` and `active_subscriptions`. Only include subscriptions where `status = 'active'`.",
+    "expected_sql": """
+    SELECT sp.plan_name, COUNT(s.subscription_id) AS active_subscriptions
+    FROM subscription_plans sp
+    JOIN subscriptions s
+    ON sp.plan_id = s.plan_id
+    WHERE s.status = 'active'
+    GROUP BY sp.plan_name;
+    """.strip(),
+    "required_patterns":[
+    {"label":"join subscriptions","pattern":r"join\s+subscriptions"},
+    {"label":"status active","pattern":r"status\s*=\s*['\"]active['\"]"}
+    ],
+    "concepts":["JOIN","GROUP BY","COUNT"],
+    "explanation":"Counts active subscriptions per plan."
+    },
+
+    {
+    "id": "q18",
+    "difficulty": "hard",
+    "topic": "multi_join",
+    "prompt": "Return the columns `title` and `genre_name` for each show and its genre.",
+    "expected_sql": """
+    SELECT s.title, g.genre_name
+    FROM shows s
+    JOIN show_genres sg
+    ON s.show_id = sg.show_id
+    JOIN genres g
+    ON sg.genre_id = g.genre_id;
+    """.strip(),
+    "required_patterns":[
+    {"label":"join show_genres","pattern":r"join\s+show_genres"},
+    {"label":"join genres","pattern":r"join\s+genres"}
+    ],
+    "concepts":["JOIN"],
+    "explanation":"Links shows to their genres through the bridge table."
+    },
+
+    {
+    "id": "q19",
+    "difficulty": "hard",
+    "topic": "aggregation",
+    "prompt": "Return the columns `show_id` and `rating_count`. Only include shows with more than 10 ratings.",
+    "expected_sql": """
+    SELECT show_id, COUNT(rating_id) AS rating_count
+    FROM ratings
+    GROUP BY show_id
+    HAVING COUNT(rating_id) > 10;
+    """.strip(),
+    "required_patterns":[
+    {"label":"group by show","pattern":r"group\s+by\s+.*show_id"},
+    {"label":"having","pattern":r"having\s+"}
+    ],
+    "concepts":["GROUP BY","HAVING"],
+    "explanation":"Finds shows that have received many ratings."
+    },
+
+    {
+    "id": "q20",
+    "difficulty": "hard",
+    "topic": "avg_rating",
+    "prompt": "Return the columns `title` and `avg_rating`. Round the average rating to 2 decimals.",
+    "expected_sql": """
+    SELECT s.title, ROUND(AVG(r.rating),2) AS avg_rating
+    FROM shows s
+    JOIN ratings r
+    ON s.show_id = r.show_id
+    GROUP BY s.title;
+    """.strip(),
+    "required_patterns":[
+    {"label":"avg rating","pattern":r"avg\s*\("},
+    {"label":"round","pattern":r"round\s*\("}
+    ],
+    "concepts":["AVG","ROUND","GROUP BY"],
+    "explanation":"Calculates the average rating for each show."
+    },
+
+    {
+    "id": "q21",
+    "difficulty": "hard",
+    "topic": "episodes",
+    "prompt": "Return the columns `title` and `episode_count` representing how many episodes each show has.",
+    "expected_sql": """
+    SELECT s.title, COUNT(e.episode_id) AS episode_count
+    FROM shows s
+    JOIN seasons se
+    ON s.show_id = se.show_id
+    JOIN episodes e
+    ON se.season_id = e.season_id
+    GROUP BY s.title;
+    """.strip(),
+    "required_patterns":[
+    {"label":"join seasons","pattern":r"join\s+seasons"},
+    {"label":"join episodes","pattern":r"join\s+episodes"}
+    ],
+    "concepts":["JOIN","GROUP BY","COUNT"],
+    "explanation":"Counts total episodes per show."
+    },
+
+    {
+    "id": "q22",
+    "difficulty": "hard",
+    "topic": "watch_history",
+    "prompt": "Return the columns `profile_id` and `total_minutes_watched`.",
+    "expected_sql": """
+    SELECT profile_id, SUM(minutes_watched) AS total_minutes_watched
+    FROM watch_history
+    GROUP BY profile_id;
+    """.strip(),
+    "required_patterns":[
+    {"label":"sum minutes","pattern":r"sum\s*\("}
+    ],
+    "concepts":["SUM","GROUP BY"],
+    "explanation":"Calculates total watch time per profile."
+    },
+
+    {
+    "id": "q23",
+    "difficulty": "hard",
+    "topic": "completed_watch",
+    "prompt": "Return the columns `profile_id` and `completed_count` representing how many episodes each profile completed.",
+    "expected_sql": """
+    SELECT profile_id, COUNT(watch_id) AS completed_count
+    FROM watch_history
+    WHERE completed = 1
+    GROUP BY profile_id;
+    """.strip(),
+    "required_patterns":[
+    {"label":"completed filter","pattern":r"completed\s*=\s*1"},
+    {"label":"count","pattern":r"count\s*\("}
+    ],
+    "concepts":["WHERE","GROUP BY","COUNT"],
+    "explanation":"Counts completed episodes per profile."
+    },
+
+    {
+    "id": "q24",
+    "difficulty": "hard",
+    "topic": "actors",
+    "prompt": "Return the columns `title` and `actor_count` representing how many actors appear in each show.",
+    "expected_sql": """
+    SELECT s.title, COUNT(sc.actor_id) AS actor_count
+    FROM shows s
+    JOIN show_cast sc
+    ON s.show_id = sc.show_id
+    GROUP BY s.title;
+    """.strip(),
+    "required_patterns":[
+    {"label":"join show_cast","pattern":r"join\s+show_cast"},
+    {"label":"count","pattern":r"count\s*\("}
+    ],
+    "concepts":["JOIN","GROUP BY","COUNT"],
+    "explanation":"Counts actors per show."
+    },
+
+    {
+    "id": "q25",
+    "difficulty": "hard",
+    "topic": "subquery",
+    "prompt": "Return the columns `title` and `release_year` for shows released after the average release year.",
+    "expected_sql": """
+    SELECT title, release_year
+    FROM shows
+    WHERE release_year >
+    (
+    SELECT AVG(release_year)
+    FROM shows
+    );
+    """.strip(),
+    "required_patterns":[
+    {"label":"avg release year","pattern":r"avg\s*\(\s*release_year"},
+    {"label":"subquery","pattern":r"select\s+avg"}
+    ],
+    "concepts":["SUBQUERY","AVG"],
+    "explanation":"Finds shows newer than the average release year."
+    },
+
+    {
+    "id": "q26",
+    "difficulty": "hard",
+    "topic": "left_join",
+    "prompt": "Return the columns `title` and `rating_count`. Include shows even if they have no ratings.",
+    "expected_sql": """
+    SELECT s.title, COUNT(r.rating_id) AS rating_count
+    FROM shows s
+    LEFT JOIN ratings r
+    ON s.show_id = r.show_id
+    GROUP BY s.title;
+    """.strip(),
+    "required_patterns":[
+    {"label":"left join ratings","pattern":r"left\s+join\s+ratings"},
+    {"label":"count","pattern":r"count\s*\("}
+    ],
+    "concepts":["LEFT JOIN","GROUP BY"],
+    "explanation":"Shows ratings per show including shows with zero ratings."
+    },
+
+    {
+    "id": "q27",
+    "difficulty": "hard",
+    "topic": "payments",
+    "prompt": "Return the columns `payment_method` and `total_amount` representing the total amount paid using each method.",
+    "expected_sql": """
+    SELECT payment_method, SUM(amount) AS total_amount
+    FROM payments
+    WHERE payment_status = 'paid'
+    GROUP BY payment_method;
+    """.strip(),
+    "required_patterns":[
+    {"label":"sum","pattern":r"sum\s*\("},
+    {"label":"paid filter","pattern":r"payment_status\s*=\s*['\"]paid['\"]"}
+    ],
+    "concepts":["SUM","GROUP BY","WHERE"],
+    "explanation":"Calculates revenue per payment method."
+    },
+
+    {
+    "id": "q28",
+    "difficulty": "hard",
+    "topic": "country_content",
+    "prompt": "Return the columns `country` and `show_count` representing how many shows were produced in each country.",
+    "expected_sql": """
+    SELECT country, COUNT(show_id) AS show_count
+    FROM shows
+    GROUP BY country;
+    """.strip(),
+    "required_patterns":[
+    {"label":"group by country","pattern":r"group\s+by\s+.*country"}
+    ],
+    "concepts":["GROUP BY","COUNT"],
+    "explanation":"Counts shows by production country."
+    },
+
+    {
+    "id": "q29",
+    "difficulty": "hard",
+    "topic": "profile_counts",
+    "prompt": "Return the columns `user_id` and `profile_count` representing how many profiles each user has.",
+    "expected_sql": """
+    SELECT user_id, COUNT(profile_id) AS profile_count
+    FROM profiles
+    GROUP BY user_id;
+    """.strip(),
+    "required_patterns":[
+    {"label":"group by user","pattern":r"group\s+by\s+.*user_id"}
+    ],
+    "concepts":["GROUP BY","COUNT"],
+    "explanation":"Counts profiles per user account."
+    },
+
+    {
+    "id": "q30",
+    "difficulty": "hard",
+    "topic": "most_watched_show",
+    "prompt": "Return the columns `show_id` and `total_minutes` representing total minutes watched per show.",
+    "expected_sql": """
+    SELECT se.show_id, SUM(w.minutes_watched) AS total_minutes
+    FROM watch_history w
+    JOIN episodes e
+    ON w.episode_id = e.episode_id
+    JOIN seasons se
+    ON e.season_id = se.season_id
+    GROUP BY se.show_id;
+    """.strip(),
+    "required_patterns":[
+    {"label":"sum minutes","pattern":r"sum\s*\("},
+    {"label":"join episodes","pattern":r"join\s+episodes"}
+    ],
+    "concepts":["JOIN","SUM","GROUP BY"],
+    "explanation":"Calculates total watch time per show."
     }
+
 
 ]
 def get_question_by_id(question_id: str):
