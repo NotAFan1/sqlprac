@@ -21,137 +21,133 @@ import {
   TerminalSquare,
 } from "lucide-react";
 
-const schemaText = `Database: retail_orders
+const schemaText = `Database: streaming_platform
 
-customers
----------
-customer_id INTEGER PRIMARY KEY
+users
+-----
+user_id INTEGER PRIMARY KEY
 first_name TEXT
 last_name TEXT
 email TEXT
-state TEXT
-city TEXT
-signup_date TEXT
-
-products
---------
-product_id INTEGER PRIMARY KEY
-product_name TEXT
-category TEXT
-subcategory TEXT
-price REAL
-
-suppliers
----------
-supplier_id INTEGER PRIMARY KEY
-supplier_name TEXT
 country TEXT
-rating REAL
+signup_date TEXT
+birth_year INTEGER
 
-product_suppliers
------------------
-product_id INTEGER
-supplier_id INTEGER
-PRIMARY KEY (product_id, supplier_id)
+subscription_plans
+------------------
+plan_id INTEGER PRIMARY KEY
+plan_name TEXT
+monthly_price REAL
+max_devices INTEGER
+video_quality TEXT
 
-employees
----------
-employee_id INTEGER PRIMARY KEY
+subscriptions
+-------------
+subscription_id INTEGER PRIMARY KEY
+user_id INTEGER
+plan_id INTEGER
+start_date TEXT
+end_date TEXT
+status TEXT
+
+profiles
+--------
+profile_id INTEGER PRIMARY KEY
+user_id INTEGER
+profile_name TEXT
+is_kids_profile INTEGER
+
+genres
+------
+genre_id INTEGER PRIMARY KEY
+genre_name TEXT
+
+shows
+-----
+show_id INTEGER PRIMARY KEY
+title TEXT
+release_year INTEGER
+country TEXT
+content_type TEXT
+age_rating TEXT
+
+show_genres
+-----------
+show_id INTEGER
+genre_id INTEGER
+PRIMARY KEY (show_id, genre_id)
+
+seasons
+-------
+season_id INTEGER PRIMARY KEY
+show_id INTEGER
+season_number INTEGER
+release_year INTEGER
+
+episodes
+--------
+episode_id INTEGER PRIMARY KEY
+season_id INTEGER
+episode_number INTEGER
+title TEXT
+duration_minutes INTEGER
+
+watch_history
+-------------
+watch_id INTEGER PRIMARY KEY
+profile_id INTEGER
+episode_id INTEGER
+watched_at TEXT
+minutes_watched INTEGER
+completed INTEGER
+
+ratings
+-------
+rating_id INTEGER PRIMARY KEY
+profile_id INTEGER
+show_id INTEGER
+rating INTEGER
+rating_date TEXT
+
+actors
+------
+actor_id INTEGER PRIMARY KEY
 first_name TEXT
 last_name TEXT
-department TEXT
-role TEXT
-hire_date TEXT
-salary REAL
+birth_year INTEGER
+country TEXT
 
-orders
-------
-order_id INTEGER PRIMARY KEY
-customer_id INTEGER
-order_date TEXT
-status TEXT
-total_amount REAL
-
-order_items
------------
-order_item_id INTEGER PRIMARY KEY
-order_id INTEGER
-product_id INTEGER
-quantity INTEGER
-unit_price REAL
-
-shipments
+show_cast
 ---------
-shipment_id INTEGER PRIMARY KEY
-order_id INTEGER
-employee_id INTEGER
-shipment_date TEXT
-carrier TEXT
-shipping_cost REAL
-delivery_status TEXT
+show_id INTEGER
+actor_id INTEGER
+role_name TEXT
+PRIMARY KEY (show_id, actor_id)
 
 payments
 --------
 payment_id INTEGER PRIMARY KEY
-order_id INTEGER
+subscription_id INTEGER
 payment_date TEXT
-payment_method TEXT
 amount REAL
-payment_status TEXT
+payment_method TEXT
+payment_status TEXT`;
 
-reviews
--------
-review_id INTEGER PRIMARY KEY
-customer_id INTEGER
-product_id INTEGER
-rating INTEGER
-review_date TEXT
-review_text TEXT
-
-warehouses
-----------
-warehouse_id INTEGER PRIMARY KEY
-warehouse_name TEXT
-state TEXT
-
-inventory
----------
-warehouse_id INTEGER
-product_id INTEGER
-stock_quantity INTEGER
-reorder_level INTEGER
-PRIMARY KEY (warehouse_id, product_id)
-
-discounts
----------
-discount_id INTEGER PRIMARY KEY
-category TEXT
-percent_off REAL
-start_date TEXT
-end_date TEXT
-
-returns
--------
-return_id INTEGER PRIMARY KEY
-order_item_id INTEGER
-return_date TEXT
-reason TEXT
-refund_amount REAL`;
 
 const starterPrompt = {
   id: "q1",
   difficulty: "Easy",
   naturalLanguage:
-    "Find the first_name, last_name, and state of all customers who live in California, ordered alphabetically by last_name.",
+    "Find the title, release_year, and country of all shows released after 2020, ordered by release_year descending.",
   expectedSql:
-    "SELECT first_name, last_name, state FROM customers WHERE state = 'CA' ORDER BY last_name ASC;",
+    "SELECT title, release_year, country FROM shows WHERE release_year > 2020 ORDER BY release_year DESC;",
   explanation: "This checks basic SELECT, WHERE, and ORDER BY skills.",
 };
 
 const starterRows = [
-  { first_name: "Ava", last_name: "Chen", state: "CA" },
-  { first_name: "Leo", last_name: "Diaz", state: "CA" },
-  { first_name: "Nina", last_name: "Patel", state: "CA" },
+  { title: "City Lights", release_year: 2024, country: "USA" },
+  { title: "Shadow Point", release_year: 2023, country: "UK" },
+  { title: "Golden Hour", release_year: 2021, country: "Canada" },
 ];
 
 function normalizeSql(sql: string) {
@@ -200,7 +196,7 @@ function ResultTable({ rows }: { rows: Record<string, unknown>[] }) {
 
 export default function SQLPracticeUI() {
   const [sql, setSql] = useState(
-    "SELECT first_name, last_name, state FROM customers WHERE state = 'CA' ORDER BY last_name ASC;"
+    "SELECT first_name, last_name, country FROM users ORDER BY last_name;"
   );
   const [practicePrompt, setPracticePrompt] = useState(starterPrompt);
   const [queryResult, setQueryResult] = useState<Record<string, unknown>[]>(starterRows);
@@ -234,7 +230,7 @@ export default function SQLPracticeUI() {
         },
         body: JSON.stringify({
           sql,
-          datasetId: "retail_orders",
+          datasetId: "streaming_platform",
           questionId: practicePrompt.id,
         }),
       });
@@ -267,7 +263,7 @@ export default function SQLPracticeUI() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          datasetId: "retail_orders",
+          datasetId: "streaming_platform",
         }),
       });
 
@@ -312,7 +308,7 @@ export default function SQLPracticeUI() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          datasetId: "retail_orders",
+          datasetId: "streaming_platform",
           questionId: practicePrompt.id,
           sql,
         }),
