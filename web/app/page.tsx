@@ -196,7 +196,7 @@ function ResultTable({ rows }: { rows: Record<string, unknown>[] }) {
 
 export default function SQLPracticeUI() {
   const [sql, setSql] = useState(
-    "SELECT first_name, last_name, country FROM users ORDER BY last_name;"
+    "SELECT title, release_year, country FROM shows WHERE release_year > 2020 ORDER BY release_year DESC;"
   );
   const [practicePrompt, setPracticePrompt] = useState(starterPrompt);
   const [queryResult, setQueryResult] = useState<Record<string, unknown>[]>(starterRows);
